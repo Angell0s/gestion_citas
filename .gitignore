@@ -1,0 +1,121 @@
+# ============================
+#        PYTHON / FASTAPI
+# ============================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+backend/lib/
+backend/lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+.env/
+env/
+
+# Testing (Python)
+.coverage
+htmlcov/
+.pytest_cache/
+
+
+# ============================
+#        NODE / NEXT.JS
+# ============================
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Next.js build output
+.next/
+out/
+build/
+dist/
+
+# Vercel
+.vercel
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+
+# ============================
+#     ENV FILES / SECRETS
+# ============================
+.env
+.env.*
+!.env.example
+
+# Backend env
+backend/.env
+backend/.env.*
+
+# Frontend env
+frontend/.env
+frontend/.env.*
+
+
+# ============================
+#       DATABASE FILES
+# ============================
+*.sqlite3
+*.db
+postgres_data/
+pgdata/
+
+
+# ============================
+#      IDE / EDITOR FILES
+# ============================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+
+# ============================
+#           DOCKER
+# ============================
+docker-compose.override.yml
+
+
+# ============================
+#            LOGS
+# ============================
+*.log
+logs/
+
+
+# ============================
+#        CERTIFICATES
+# ============================
+*.pem
