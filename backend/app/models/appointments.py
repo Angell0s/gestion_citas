@@ -30,6 +30,17 @@ class Service(Base, TimestampMixin):
 class Appointment(Base, TimestampMixin):
     __tablename__ = "appointments"
 
+    __table_args__ = (
+        # Índice de tiempo para consultas de disponibilidad y reportes/dashboards
+        Index("ix_appointments_business_time", "business_id", "start_at"),
+        
+        # Índice de estado de reportes, útil para dashboards de rendimiento y para filtrar rápidamente citas activas vs canceladas
+        Index("ix_appointments_business_status", "business_id", "status"),
+        
+        # Índice de empledado para reportes de productividad, entre otros
+        Index("ix_appointments_business_employee_time", "business_id", "employee_id", "start_at"),
+    )
+
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
@@ -38,6 +49,9 @@ class Appointment(Base, TimestampMixin):
     )
     client_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("clients.id"), nullable=False, index=True
+    )
+    employee_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id"), nullable=True, index=True
     )
     service_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("services.id"), nullable=False, index=True
@@ -49,4 +63,5 @@ class Appointment(Base, TimestampMixin):
 
     business: Mapped["Businesses"] = relationship("Businesses", back_populates="appointments")
     client: Mapped["Client"] = relationship("Client", back_populates="appointments")
+    employee: Mapped["User"] = relationship("User", back_populates="appointments")
     service: Mapped["Service"] = relationship("Service", back_populates="appointments")

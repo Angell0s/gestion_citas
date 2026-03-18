@@ -1,7 +1,7 @@
 # backend\app\models\business.py
 
 import uuid
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime, time
 from sqlalchemy import DateTime, ForeignKey, Index, String, text
@@ -33,25 +33,14 @@ class Businesses(Base, TimestampMixin):
     # Relaciones
     owner: Mapped["User"] = relationship("User", back_populates="businesses")
     business_hours: Mapped[List["BusinessHours"]] = relationship(back_populates="business", cascade="all, delete-orphan")
-    
-    # NUEVA: Relación con los miembros (empleados/staff) del negocio
     members: Mapped[List["BusinessMember"]] = relationship(back_populates="business", cascade="all, delete-orphan")
+    clients: Mapped[List["Client"]] = relationship("Client", back_populates="business", cascade="all, delete-orphan")
+    clients_reputation: Mapped[List["ClientReputation"]] = relationship("ClientReputation", back_populates="business", cascade="all, delete-orphan")
+    services: Mapped[List["Service"]] = relationship("Service", back_populates="business", cascade="all, delete-orphan")
+    appointments: Mapped[List["Appointment"]] = relationship("Appointment", back_populates="business", cascade="all, delete-orphan")
+    
+    roles: Mapped[List["Role"]] = relationship("Role", back_populates="business", cascade="all, delete-orphan")
 
-    clients: Mapped[List["Client"]] = relationship(
-        "Client", back_populates="business", cascade="all, delete-orphan"
-    )
-
-    clients_reputation: Mapped[List["ClientReputation"]] = relationship(
-        "ClientReputation", back_populates="business", cascade="all, delete-orphan"
-    )
-
-    services: Mapped[List["Service"]] = relationship(
-        "Service", back_populates="business", cascade="all, delete-orphan"
-    )
-
-    appointments: Mapped[List["Appointment"]] = relationship(
-        "Appointment", back_populates="business", cascade="all, delete-orphan"
-    )
 
 class BusinessHours(Base, TimestampMixin):
     __tablename__ = "business_hours"
@@ -68,19 +57,30 @@ class BusinessHours(Base, TimestampMixin):
     
     business: Mapped["Businesses"] = relationship("Businesses", back_populates="business_hours")
 
-class Role(Base): # Renombrado a Role (Singular + CamelCase)
+
+class Role(Base, TimestampMixin):
     __tablename__ = "roles"
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
-    superuser: Mapped[bool] = mapped_column(default=False, nullable=False)
+    business_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("businesses.id"), nullable=True, index=True
+    )
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    is_business_admin: Mapped[bool] = mapped_column(default=False, nullable=False)
+    
+    permissions: Mapped[List[str]] = mapped_column(ARRAY(String), server_default="{}")
 
-    # Relación con los miembros que tienen este rol
+    __table_args__ = (
+        Index("ix_roles_business_name", "business_id", "name", unique=True),
+    )
+
+    business: Mapped["Businesses"] = relationship("Businesses", back_populates="roles")
     members: Mapped[List["BusinessMember"]] = relationship(back_populates="role")
 
-class BusinessMember(Base, TimestampMixin): # Renombrado a BusinessMember
+
+class BusinessMember(Base, TimestampMixin):
     __tablename__ = "business_members"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -96,7 +96,6 @@ class BusinessMember(Base, TimestampMixin): # Renombrado a BusinessMember
         ForeignKey("roles.id"), nullable=False, index=True
     )
 
-    # Relaciones para acceder a los objetos completos
     business: Mapped["Businesses"] = relationship("Businesses", back_populates="members")
     user: Mapped["User"] = relationship("User", back_populates="memberships")
     role: Mapped["Role"] = relationship("Role", back_populates="members")
