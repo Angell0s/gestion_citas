@@ -70,7 +70,7 @@ class Role(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     is_business_admin: Mapped[bool] = mapped_column(default=False, nullable=False)
     
-    permissions: Mapped[List[str]] = mapped_column(ARRAY(String), server_default="{}")
+    permissions: Mapped[List[str]] = mapped_column(ARRAY(String), default=list, server_default="{}")
 
     __table_args__ = (
         Index("ix_roles_business_name", "business_id", "name", unique=True),

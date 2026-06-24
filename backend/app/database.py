@@ -1,10 +1,10 @@
 # backend\app\database.py
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker 
-from app.config import DATABASE_URL
-
+from backend.app.core.config import settings
+    
 engine = create_async_engine(
-    DATABASE_URL,
-    echo=True
+    settings.DATABASE_URL,
+    echo=settings.DEBUG
 )
 
 AsyncSessionLocal = async_sessionmaker(
