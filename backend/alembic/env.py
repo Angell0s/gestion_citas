@@ -6,7 +6,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from app.core.config import Settings
+from app.core.config import settings
 
 from app.models import Base
 
@@ -14,10 +14,10 @@ from app.models import Base
 # access to the values within the .ini file in use.
 config = context.config
 
-if not Settings.DATABASE_URL:
+if not settings.DATABASE_URL:
     raise ValueError("DATABASE_URL no está configurada o el archivo .env no se cargó correctamente.")
 
-sync_url = Settings.DATABASE_URL.replace("+asyncpg", "")
+sync_url = settings.DATABASE_URL.replace("+asyncpg", "")
 config.set_main_option("sqlalchemy.url", sync_url)
 
 
