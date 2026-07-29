@@ -18,6 +18,7 @@ class UserRead(UserBase):
     id: uuid.UUID
     slug: str
     is_system_admin: bool
+    is_active: bool
     created_at: datetime
     updated_at: datetime
 
