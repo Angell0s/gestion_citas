@@ -1,13 +1,12 @@
 # backend\app\main.py
 from fastapi import FastAPI
+from app.api.api_v1.api import api_router
+from app.core.config import settings
 
-app = FastAPI()
+app = FastAPI(title=settings.PROJECT_NAME)
 
 
-@app.get("/")
-def read_root():
-    """Raíz de la API que retorna un mensaje de bienvenida."""
-    return {"message": "Hello World"}
+app.include_router(api_router, prefix="/api/v1")
 
 
 # punto de entrada cuando se ejecuta directamente

@@ -1,3 +1,4 @@
+# backend\app\core\config.py
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -14,7 +15,10 @@ class Settings:
     DB_HOST = os.getenv("DB_HOST", "localhost")
     DB_PORT = int(os.getenv("DB_PORT", 5432))
 
-    SECRET_KEY = os.getenv("SECRET_KEY", "")
+    SECRET_KEY = os.getenv("SECRET_KEY")
+    if not SECRET_KEY:
+        raise ValueError("SECRET_KEY must be set in environment variables")
+    
     JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
     JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", 60))
 
@@ -23,5 +27,8 @@ class Settings:
     PROJECT_NAME = os.getenv("PROJECT_NAME", "Sistema de Citas")
     PROJECT_VERSION = os.getenv("PROJECT_VERSION", "0.1.0")
     ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+
+    ACCESS_TOKEN_EXPIRE_MINUTES_REMEMBER = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES_REMEMBER", 60 * 24 * 7))  # 7 días
+    ACCESS_TOKEN_EXPIRE_MINUTES_DEFAULT = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES_DEFAULT", 60))  # 1 hora
 
 settings = Settings()
