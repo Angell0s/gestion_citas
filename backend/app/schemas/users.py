@@ -21,9 +21,8 @@ class UserRead(UserBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True
-
+    model_config = ConfigDict(from_attributes=True)
+    
 class UserLogin(BaseModel):
     username: str = Field(..., description="Nombre de usuario o correo electrónico")
     password: str = Field(..., description="Contraseña del usuario")

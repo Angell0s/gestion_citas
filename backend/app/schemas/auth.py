@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 class LoginRequest(BaseModel):
     username: str = Field(..., description="Nombre de usuario o correo electrónico")
     password: str = Field(..., description="Contraseña del usuario")
+    remember_me: bool = Field(default=False, description="Extender la duración de la sesión")
 
 class TokenResponse(BaseModel):
     access_token: str = Field(..., description="Token JWT de acceso")
