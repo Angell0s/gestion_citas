@@ -1,29 +1,41 @@
 # backend/app/api/api_v1/endpoints/auth.py
-from fastapi import Depends, HTTPException, status
-from app.core.permissions import SystemPermissions
+
+from datetime import timedelta
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from app.core import security
+from app.core.config import settings
+from app.deps.db import get_db
 from app.models.user import User
-from app.deps.auth import get_current_active_user  # Tu dependencia actual de usuario logueado
+from app.schemas.auth import LoginRequest, TokenResponse
 
-class PermissionChecker:
-    def __init__(self, required_permission: SystemPermissions):
-        self.required_permission = required_permission.value
+router = APIRouter()
 
-    def __call__(self, current_user: User = Depends(get_current_active_user)) -> User:
-        # 1. Si es superusuario/admin global, le damos acceso total
-        if getattr(current_user, "is_superuser", False):
-            return current_user
-
-        # 2. Extraer todos los permisos que tiene el usuario a través de sus roles
-        # (Ajusta la relación según cómo tengas mapeado tu modelo User -> Role -> Permissions)
-        user_permissions = set()
-        if hasattr(current_user, "role") and current_user.role:
-            user_permissions = {p.code for p in current_user.role.permissions}
-
-        # 3. Validar si posee el permiso solicitado
-        if self.required_permission not in user_permissions:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"No tienes el permiso necesario: '{self.required_permission}'"
-            )
-        
-        return current_user
+@router.post("/login", response_model=TokenResponse)
+def login_access_token(
+    data: LoginRequest,
+    db: Session = Depends(get_db),
+):
+    # OAuth2PasswordRequestForm usa el campo 'username' (que puede ser el email)
+    user = db.query(User).filter(User.email == data.username).first()
+    
+    if not user or not security.verify_password(data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Correo o contraseña incorrectos"
+        )
+    
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Usuario inactivo"
+        )
+    
+    return {
+        "access_token": security.create_access_token(
+            str(user.id),
+            remember_me=data.remember_me
+        ),
+        "token_type": "bearer",
+    }
