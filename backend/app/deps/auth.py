@@ -1,31 +1,28 @@
-# backend\app\deps\auth.py
-
-from sqlalchemy import select
+# backend/app/deps/auth.py
 
 from uuid import UUID
-
-from app.models.user import User
-from app.deps.db import get_db
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import jwt, JWTError
+import jwt
 from pydantic import ValidationError
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.permissions import SystemPermissions
-from app.deps.auth import get_current_active_user  # Tu dependencia actual de usuario logueado
+from app.deps.db import get_db
+from app.models.user import User
 
-# 1. Configuración de OAuth2 (En este proyecto aún no defino el API para eso)
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login/access-token")
+# 1. Ruta exacta de tu endpoint de login para que Swagger UI sepa a dónde enviar credenciales
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+
 
 async def get_current_user(
     db: AsyncSession = Depends(get_db), 
     token: str = Depends(oauth2_scheme)
 ) -> User:
     """
-    Decodifica el token JWT y busca al usuario de forma asíncrona.
+    Decodifica el token JWT recibido en la cabecera Authorization y busca al usuario en BD.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -34,6 +31,7 @@ async def get_current_user(
     )
 
     try:
+        # Decodificamos el token con la clave secreta
         payload = jwt.decode(
             token, 
             settings.SECRET_KEY, 
@@ -44,7 +42,7 @@ async def get_current_user(
         if user_id is None:
             raise credentials_exception
             
-    except (JWTError, ValidationError):
+    except (jwt.PyJWTError, ValidationError):
         raise credentials_exception
     
     try:
@@ -52,7 +50,8 @@ async def get_current_user(
     except ValueError:
         raise credentials_exception
     
-    result = await db.execute(select(User).where(User.id == user_id))
+    # Consultamos al usuario en la BD de forma asíncrona
+    result = await db.execute(select(User).where(User.id == user_id_uuid))
     user = result.scalars().first() 
     
     if user is None:
@@ -60,17 +59,43 @@ async def get_current_user(
         
     return user
 
+
+async def get_current_active_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """
+    Verifica que el usuario obtenido del token esté activo.
+    """
+    if not current_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Usuario inactivo"
+        )
+    return current_user
+
+async def get_current_system_admin(
+    current_user: User = Depends(get_current_active_user),
+) -> User:
+    """
+    Verifica que el usuario actual tenga privilegios de administrador del sistema.
+    """
+    if not current_user.is_system_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Se requieren privilegios de administrador del sistema",
+        )
+    return current_user
+
 class PermissionChecker:
     def __init__(self, required_permission: SystemPermissions):
         self.required_permission = required_permission.value
 
     def __call__(self, current_user: User = Depends(get_current_active_user)) -> User:
-        # 1. Si es superusuario/admin global, le damos acceso total
-        if getattr(current_user, "is_superuser", False):
+        # 1. Si es superusuario/admin global (is_system_admin), acceso total
+        if getattr(current_user, "is_system_admin", False):
             return current_user
 
         # 2. Extraer todos los permisos que tiene el usuario a través de sus roles
-        # (Ajusta la relación según cómo tengas mapeado tu modelo User -> Role -> Permissions)
         user_permissions = set()
         if hasattr(current_user, "role") and current_user.role:
             user_permissions = {p.code for p in current_user.role.permissions}
@@ -83,4 +108,3 @@ class PermissionChecker:
             )
         
         return current_user
-

@@ -26,6 +26,7 @@ class Service(Base, TimestampMixin):
     price: Mapped[Decimal] = mapped_column(Numeric(precision=10, scale=2), nullable=False)
 
     business: Mapped["Businesses"] = relationship("Businesses", back_populates="services")
+    appointments: Mapped[List["Appointment"]] = relationship("Appointment", back_populates="service")
 
 class Appointment(Base, TimestampMixin):
     __tablename__ = "appointments"
