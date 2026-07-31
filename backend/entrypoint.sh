@@ -13,5 +13,8 @@ echo "PostgreSQL disponible."
 echo "Aplicando migraciones..."
 alembic upgrade head
 
+echo "Verificando/Iniciando datos iniciales (Superusuario)..."
+python -m app.db.init_db
+
 echo "Iniciando FastAPI..."
 exec "$@"
