@@ -31,4 +31,8 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES_REMEMBER = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES_REMEMBER", 60 * 24 * 7))  # 7 días
     ACCESS_TOKEN_EXPIRE_MINUTES_DEFAULT = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES_DEFAULT", 60))  # 1 hora
 
+    FIRST_SUPERUSER_USERNAME = os.getenv("FIRST_SUPERUSER_USERNAME", "admin")
+    FIRST_SUPERUSER_EMAIL = os.getenv("FIRST_SUPERUSER_EMAIL", "admin@example.com")
+    FIRST_SUPERUSER_PASSWORD = os.getenv("FIRST_SUPERUSER_PASSWORD", "AdminPasswordSecreta123!")
+
 settings = Settings()

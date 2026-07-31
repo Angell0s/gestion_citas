@@ -5,7 +5,10 @@ from datetime import datetime, timedelta, timezone
 import jwt
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(
+    schemes=["bcrypt_sha256"],
+    deprecated="auto"
+)
 
 
 def hash_password(password: str) -> str:
@@ -15,7 +18,7 @@ def hash_password(password: str) -> str:
 def verify_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
 
-def decode_access_token(token: str) -> dict:
+def decode_access_token(token: str) -> dict | None:
     try:
         payload = jwt.decode(
             token, 
